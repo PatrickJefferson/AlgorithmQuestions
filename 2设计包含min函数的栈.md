@@ -1,0 +1,125 @@
+### 设计包含min 函数的栈
+题目：定义栈的数据结构，要求添加一个min 函数，能够得到栈的最小元素。
+要求函数min、push 以及pop 的时间复杂度都是O(1)
+
+
+#### 知识点提要: 
+
+- 栈是一种特殊的列表，栈内的元素只能通过列表的一端访问，这一端称为栈顶。栈被称为一种后入先出（LIFO，last-in-first-out）的数据结构。
+  由于栈具有后入先出的特点，所以任何不在栈顶的元素都无法访问。为了得到栈底的元素，必须先拿掉上面的元素。
+  对栈的两种主要操作是将一个元素压入栈和将一个元素弹出栈。入栈使用push()方法，出栈使用pop()方法。下图演示了入栈和出栈的过程。
+
+- 另一个常用的操作是预览栈顶的元素。pop()方法虽然可以访问栈顶的元素，但是调用该方法后，栈顶元素也从栈中被永久性地删除了。peek()方法则只返回栈顶元素，而不删除它。
+  为了记录栈顶元素的位置，同时也为了标记哪里可以加入新元素，我们使用变量top，当向栈内压入元素时，该变量增大；从栈内弹出元素时，该变量减小。
+  push()、pop()和peek()是栈的3个主要方法，但是栈还有其他方法和属性。
+
+- stack通常的操作：
+  Stack()    建立一个空的栈对象
+  push()     把一个元素添加到栈的最顶层
+  pop()      删除栈最顶层的元素，并返回这个元素
+  peek()     返回最顶层的元素，并不删除它
+  isEmpty()  判断栈是否为空
+  size()     返回栈中元素的个数
+  '''
+
+#### 解析:
+- 除了题目要求的栈之外新开一个栈,用来记录最小值,每当在原栈中push数据后,与最小值栈中的栈顶元素比较,如果新值较小,则在最小值栈中push新值;
+  否则再次push栈顶元素.
+  pop的时候,只要将最小值栈也pop一下就行了.
+  这样,min函数只需要返回最小值栈的栈顶元素即可.
+
+- 常规解空间上的一个优化:
+  一般说来,最小值不会每次都需要更新,因此最小值栈里面会有很多重复元素.因此一个简单的优化就是在新值只当<=原最小值时才pushIntoMin,注意这个==的条
+  件是不可少的,这是为了防止在pop的时候错误的pop最小值.pop的是, 当待pop值==最小值时popMinStack, 其他时候不对最小值栈进行pop
+
+- 下面说一种具有常数空间复杂度的方法:
+  在这个方法里,只需要额外开一个用于存放当前最小值的变量min即可.因此下面提到的push和pop操作都是对于题目中要求的栈来操作的,当然,这也是这个算法里
+  唯一的栈.
+  设push的参数为v_push,pop的返回值为v_pop.
+  先说下整体思路:因为栈中所有元素的值都不会小于当其为栈顶元素时min函数的值,所以在栈中其实只需要保存某元素比相应最小值大出来的值就可以了.而对于最
+  小值更新的位置,栈元素肯定为0,因此可以利用这个位置来保存更多的信息,在这里是更新后前两个最小值的差值,而这个值肯定是非正的.
+
+- 根据上面的思路,push函数按照如下策略进行:
+  首先push (v_push-min),如果v_push < min,更新min为v_push.
+  相应的,pop函数按照如下策略进行(称栈顶元素为top):
+  如果top >= 0, v_pop = min+top, 如果top < 0, v_pop = min,然后更新min为min-top.
+  显然,对于min函数来说,只需要返回min空间的内容即可.
+
+- 类似的方法:
+  push时候 如果 v_push >= min, v_push 直接入栈， 如果 v_push < min, 那么入栈的是 2 * v_push - min, 然后 min = v_push. 出栈时， 如果栈顶的top >= min 直接出，如果 top < min 则出现异常，将min作为pop的返回值，另外需要还原前一个最小值，方法是 min = 2 * min - top
+
+- 作者：anchor89 
+  来源：CSDN 
+  原文：https://blog.csdn.net/anchor89/article/details/6055412
+
+```python
+class Stack():
+    '''栈'''
+    def __init__(self):
+        self._items = []
+        self._min = None
+
+    def isempty(self):
+        return len(self._items) == 0
+
+    def push(self, value):
+        # 如果栈为空则将第一个值设为min的初始值并将0入栈
+        if self.isempty():
+            self._min = value
+            self._items.append(0)
+        else:
+            # 将value - min 入栈
+            self._items.append(value-self._min)
+            # 如果value<min 则将min值修改为value的值
+            if value < self._min:
+                self._min = value
+
+    def pop(self):
+        # 获取栈顶元素
+        value = self._items.pop()
+        # 如果栈顶元素不大于0则说明入栈时该元素比min小, 因此该元素原来的值应该是当前min值, 而当前min值应修改回该元素入栈前的值, 参考push()
+        if value <= 0:
+            value, self._min = self._min, self._min - value
+        else:
+            # 如果栈顶元素大于0则说明入栈时其原始值大于min值, 此时的value为其原始值减去min值得来, 因此应加回min值.
+            value += self._min
+        return value
+
+    def peek(self):
+        # 参考pop函数
+        value = self._items[-1]
+        if value <= 0:
+            value, self._min = self._min, self._min - value
+        else:
+            value += self._min
+        return value
+
+    def size(self):
+        return len(self._items)
+
+    def min(self):
+        return self._min
+
+    def stack(self):
+        return self._items
+
+
+def main():
+    stack = Stack()
+    values = [5, 2, 3, 1, 6, 3, 6, 8, 2, 0]
+    for value in values:
+        stack.push(value)
+        print(stack.min())
+
+    while not stack.isempty():
+        print('-'*50)
+        print('对应列表:', values)
+        print('当前栈:', stack.stack())
+        print('当前栈最小值:', stack.min())
+        print('弹出元素:', stack.pop())
+
+        
+if __name__ == '__main__':
+    main()
+```
+
