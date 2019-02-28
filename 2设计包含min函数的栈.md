@@ -89,7 +89,7 @@ class Stack():
         # 参考pop函数
         value = self._items[-1]
         if value <= 0:
-            value, self._min = self._min, self._min - value
+            value = self._min
         else:
             value += self._min
         return value
